@@ -1,4 +1,4 @@
-name: Spring Boot CI
+name: Spring Boot CI/CD
 
 on:
   push:
@@ -20,24 +20,25 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
+          distribution: 'adopt'  # Specify the JDK distribution (e.g., adopt or temurin)
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Build and Package Spring Boot App
+        run: mvn clean package -DskipTests=true
         working-directory: ./  # Run Maven from the repository root
 
-      - name: Dockerize the application
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'  # Use Python 3.x for Docker actions
-      # Make sure to replace this with the appropriate Docker action (e.g., docker/build-push-action)
       - name: Docker Build and Push
         uses: docker/build-push-action@v2
         with:
-          context: .  # Use the repository root as the build context
-          file: Dockerfile  # Specify the path to your Dockerfile
+          context: .
+          file: ./Dockerfile  # Path to your Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }}
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }}
