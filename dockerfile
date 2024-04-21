@@ -1,4 +1,3 @@
-FROM eclipse-temurin:17-jdk-alpine
-VOLUME /tmp
+FROM adoptopenjdk/openjdk17:alpine
 COPY target/*.jar app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
