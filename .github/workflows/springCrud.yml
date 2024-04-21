@@ -13,41 +13,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v1
-      with:
-        java-version: '17'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
 
-    - name: Build with Maven
-      run: mvn clean install
+      - name: Build with Maven
+        run: mvn clean install
+        working-directory: ./  # Run Maven from the repository root
 
-    - name: Dockerize the application
-      uses: docker-dind@v4
-      with:
-        dockerfile: .
-        args:
-          DOCKER_BUILDKIT: 1
-
-    - name: Deploy to Docker Hub
-      uses: docker-dind@v4
-      with:
-        args:
-          DOCKER_DRIVER: overlay2
-          DOCKER_HOST: tcp://0.0.0.0:2375
-          DOCKER_TLS_VERIFY: 1
-          DOCKER_CERT_PATH: ${{ secrets.DOCKER_CERT_PATH }}
-          DOCKER_CLIENT_CERT: ${{ secrets.DOCKER_CLIENT_CERT }}
-          DOCKER_CLIENT_KEY: ${{ secrets.DOCKER_CLIENT_KEY }}
+      - name: Dockerize the application
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'  # Use Python 3.x for Docker actions
+      # Make sure to replace this with the appropriate Docker action (e.g., docker/build-push-action)
+      - name: Docker Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .  # Use the repository root as the build context
+          file: Dockerfile  # Specify the path to your Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }}
+        env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKER_EMAIL: ${{ secrets.DOCKER_EMAIL }}
-      env:
-        DOCKER_IMAGE: ${{ secrets.DOCKER_IMAGE }}
-        DOCKER_TAG: ${{ secrets.DOCKER_TAG }}
-      run: |
-        docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} -e ${{ secrets.DOCKER_EMAIL }}
-        docker pull ${{ secrets.DOCKER_IMAGE }}
-        docker tag ${{ secrets.DOCKER_IMAGE }}:${{ secrets.DOCKER_TAG }} ${{ secrets.DOCKER_IMAGE }}:latest
-        docker push ${{ secrets.DOCKER_IMAGE }}:latest
+
