@@ -22,13 +22,13 @@ jobs:
       - name: Build and Package Spring Boot App
         run: |
           ./mvnw clean package -DskipTests=true
-        working-directory: ./path_to_your_spring_boot_project
+        working-directory: ./path_to_your_spring_boot_project  # Replace with the actual path to your Spring Boot project
 
       - name: Docker Build and Push
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./path_to_your_dockerfile
+          file: ./path_to_your_dockerfile  # Replace with the path to your Dockerfile
           push: true
           tags: your_docker_hub_username/your_image_name:latest
         env:
